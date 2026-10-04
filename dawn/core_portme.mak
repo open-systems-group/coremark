@@ -21,16 +21,20 @@
 OUTFLAG= -o
 # Flag : CC
 #	Use this flag to define compiler to use
-CC 		= gcc
+CC 		= riscv-none-elf-gcc
 # Flag : LD
 #	Use this flag to define compiler to use
-LD		= gld
+LD		= riscv-none-elf-gcc
 # Flag : AS
 #	Use this flag to define compiler to use
-AS		= gas
+AS		= riscv-none-elf-as
+
+
+ARCH = -march=rv32im -mabi=ilp32
+
 # Flag : CFLAGS
 #	Use this flag to define compiler options. Note, you can add compiler options from the command line using XCFLAGS="other flags"
-PORT_CFLAGS = -O0 -g
+PORT_CFLAGS = -O2 -g ${ARCH}
 FLAGS_STR = "$(PORT_CFLAGS) $(XCFLAGS) $(XLFLAGS) $(LFLAGS_END)"
 CFLAGS = $(PORT_CFLAGS) -I$(PORT_DIR) -I. -DFLAGS_STR=\"$(FLAGS_STR)\" 
 #Flag : LFLAGS_END
@@ -40,12 +44,12 @@ SEPARATE_COMPILE=1
 # Flag : SEPARATE_COMPILE
 # You must also define below how to create an object file, and how to link.
 OBJOUT 	= -o
-LFLAGS 	= 
-ASFLAGS =
+LFLAGS 	= $(ARCH) -nostartfiles -T $(PORT_DIR)/link.ld
+ASFLAGS = $(ARCH)
 OFLAG 	= -o
 COUT 	= -c
 
-LFLAGS_END = 
+LFLAGS_END = -lgcc
 # Flag : PORT_SRCS
 # 	Port specific source files can be added here
 #	You may also need cvt.c if the fcvt functions are not provided as intrinsics by your compiler!
@@ -63,7 +67,7 @@ LOAD = echo "Please set LOAD to the process of loading the executable to the fla
 RUN = echo "Please set LOAD to the process of running the executable (e.g. via jtag, or board reset)"
 
 OEXT = .o
-EXE = .bin
+EXE = .elf
 
 $(OPATH)$(PORT_DIR)/%$(OEXT) : %.c
 	$(CC) $(CFLAGS) $(XCFLAGS) $(COUT) $< $(OBJOUT) $@
@@ -85,3 +89,9 @@ port_pre% port_post% :
 OPATH = ./
 MKDIR = mkdir -p
 
+PORT_OBJS = $(PORT_DIR)/crt0$(OEXT) $(PORT_DIR)/core_portme$(OEXT) $(PORT_DIR)/ee_printf$(OEXT)
+
+OBJCOPY = riscv-none-elf-objcopy
+
+port_postbuild:
+	$(OBJCOPY) -O binary $(OUTFILE) $(OPATH)coremark.bin

@@ -662,7 +662,6 @@ ee_vsprintf(char *buf, const char *fmt, va_list args)
 void
 uart_send_char(char c)
 {
-#error "You must implement the method uart_send_char to use this file!\n";
     /*	Output of a char to a UART usually follows the following model:
             Wait until UART is ready
             Write char to UART
@@ -676,6 +675,9 @@ uart_send_char(char c)
             Check the UART sample code on your platform or the board
        documentation.
     */
+
+    *((volatile unsigned int*)0x70000000) = c;
+    *((volatile unsigned char*)0x8000034) = c;
 }
 
 int
